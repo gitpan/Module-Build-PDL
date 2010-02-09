@@ -6,7 +6,7 @@ use warnings;
 use strict;
 use Carp;
 
-use version; our $VERSION = qv('0.0.1');
+use version; our $VERSION = qv('0.0.2');
 
 
 # To add a new property, you would call
@@ -20,7 +20,7 @@ use version; our $VERSION = qv('0.0.1');
 # and to include the necessary PDL include files and linker options. This means we
 # must change the default build_elements, include_dirs, and extra_linker_flags.
 
-=begin didn't-work
+=begin didntwork
 
 # The first shot might be to simply overwrite them with our own package's
 # default properties.  We should be able to do this because M::B::PDL is a derived
@@ -31,7 +31,9 @@ __PACKAGE__->add_property(include_dirs => [PDL::Core::Dev::whereami_any().'/Core
 __PACKAGE__->add_property(extra_linker_flags => [$PDL::Config{MALLOCDBG}->{libs}]);
 
 # Unfortunately, that didn't work.  I'm not entirely sure why.
-=end didn't-work
+
+=end didntwork
+
 =cut
 
 # My second shot is to create a M::B::PDL constructor that simply
@@ -99,6 +101,11 @@ sub process_pd {
 	# processing the .pm and .xs files.
 }
 
+# working here
+# Consider overriding the process_xs command so that if it's a normal xs file
+# it just calls the SUPER method, but if the .xs file has an associated .pd
+# file, it compiles it with the correct typemap, indludes, and libraries.
+
 1; # Magic true value required at end of module
 __END__
 
@@ -109,7 +116,7 @@ Module::Build::PDL - A Module::Build class for building PDL projects.
 
 =head1 VERSION
 
-This document describes Module::Build::PDL version 0.0.1, a very
+This document describes Module::Build::PDL version 0.0.2, a very
 rough version indeed.
 
 
@@ -302,7 +309,7 @@ interface at L<http://rt.cpan.org>.
 
 =head1 AUTHOR
 
-David Mertens
+David Mertens, with help from Judd Taylor.
 
 
 =head1 LICENCE AND COPYRIGHT

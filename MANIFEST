@@ -1,11 +1,10 @@
 Build.PL
 Changes
-ignore.txt
 lib/Module/Build/PDL.pm
-MANIFEST
-META.yml
+MANIFEST			This list of files
 README
 t/00.load.t
 xt/perlcritic.t
 xt/pod-coverage.t
 xt/pod.t
+META.yml
