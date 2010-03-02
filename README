@@ -1,4 +1,4 @@
-Module-Build-PDL version 0.0.1
+Module-Build-PDL version 0.0.3
 
 The purpose of Module::Build::PDL is to provide a Module::Build
 style avenue for creating PDL distributions.  PDL has its own filetype,

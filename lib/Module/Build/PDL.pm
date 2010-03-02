@@ -6,8 +6,7 @@ use warnings;
 use strict;
 use Carp;
 
-use version; our $VERSION = qv('0.0.2');
-
+use version; our $VERSION = qv('0.0.3');
 
 # To add a new property, you would call
 # __PACKAGE__->add_property(property_name => $defaults);
@@ -56,6 +55,14 @@ sub new {
 	return $self;
 }
 
+# Allow the person installing to force a PDL::PP rebuild
+sub ACTION_forcepdlpp {
+	my $self = shift;
+	$self->log_info("Forcing PDL::PP build\n");
+	$self->{FORCE_PDL_PP_BUILD} = 1;
+	$self->ACTION_build();
+}
+
 # largely based on process_PL_files and process_xs_files in M::B::Base
 sub process_pd_files {
 	my $self = shift;
@@ -91,10 +98,14 @@ sub process_pd {
 	# Callpack -> an optional argument used for the XS PACKAGE keyword;
 	#    if left blank, it will be identical to the module name
 	my $PDL_arg = "-MPDL::PP qw[$mod_name $mod_name $build_prefix]";
-	# This is an undocumented command, so it could change in the future:
-	$self->run_perl_command([$PDL_arg, $file]);
-	$self->add_to_cleanup("$build_prefix.pm", "$build_prefix.xs");
+
+	# Both $self->up_to_date and $self->run_perl_command are undocumented
+	# so they could change in the future:
+	$self->run_perl_command([$PDL_arg, $file])
+		if ($self->{FORCE_PDL_PP_BUILD}
+			or not $self->up_to_date($file, ["$build_prefix.pm", "$build_prefix.xs"]));
 	
+	$self->add_to_cleanup("$build_prefix.pm", "$build_prefix.xs");
 	# Add the newly created .pm and .xs files to the list of such files?
 	# No, because the current build process looks for all such files and
 	# processes them, and it doesn't create that list until it's actually
@@ -116,8 +127,7 @@ Module::Build::PDL - A Module::Build class for building PDL projects.
 
 =head1 VERSION
 
-This document describes Module::Build::PDL version 0.0.2, a very
-rough version indeed.
+This document describes Module::Build::PDL version 0.0.3.
 
 
 =head1 SYNOPSIS
@@ -127,13 +137,12 @@ rough version indeed.
     use Module::Build::PDL;
     
     my $builder = Module::Build::PDL->new(
-        dist_name         => 'PDL-My-Mod',
+        dist_name           => 'PDL-My-Mod',
         license             => 'perl',
-        dist_author         => 'David Mertens <mertens2@illinois.edu>',
-        dist_version_from   => 'lib/PDL/My/Mod.pm',
+        dist_author         => 'Your Name <yourname@example.com>',
+        dist_version_from   => 'lib/PDL/My/Mod.pd',
         requires => {
             'Test::More' => 0,
-            'version'    => 0,
             'PDL'        => 0,
         },
         add_to_cleanup      => [ 'PDL-My-Mod-*' ],
@@ -155,8 +164,22 @@ explanation of how to use C<Build> files and L<Module::Build::Authoring>
 for an explanation of how to use the module itself in your own
 distributions.
 
-See L</CONFIGURATION AND ENVIRONMENT> below for details on how to set
-up your distribution.
+Note that C<Module::Build::PDL> includes an additional action:
+C<forcepdlpp>. This will force your .pd files to be rebuilt, which is
+handy if they have an external dependency that has changed. To use
+this, simpy issue the following command:
+
+ $ ./Build forcepdlpp
+
+See L</CONFIGURATION AND ENVIRONMENT> below for more details on how to
+set up your distribution.
+
+=head1 VERSION SKEW
+
+I found out the hard way that if you are working on a module and you
+update the version, you must rerun C<Build.PL>. Experienced programmers
+probably already knew that, but I didn't and I hope this note will help
+any new module maintainers as they update their work.
 
 =head1 DIAGNOSTICS
 
@@ -223,8 +246,6 @@ properly process it for you.
 
 L<PDL>, L<Module::Build>
 
-None known.
-
 =head1 TODO
 
 I have a number of things that I need to add to this module.
@@ -256,21 +277,14 @@ where C<GSL> is a good example.
 
 This module needs to have a build-in dependence on itself, naturally.
 
-=item 4. Only create the .xs and .pm files on change
-
-Right now the build process always runs C<PDL::PP> on every .pd file,
-regardless of whether or not it's changed.  This is handy when I'm
-trying to debug C<Module::Build::PDL>, but it is not at all in the
-keeping of a proper build process.
-
-=item 5. Better documentation
+=item 4. Better documentation
 
 Obviously.
 
-=item 6. Tests
+=item 5. Tests
 
 I'm not even quite sure how to write tests for this, but they really
-should be done.
+should be done. (TODO: check the output of various logs.)
 
 =back
 
